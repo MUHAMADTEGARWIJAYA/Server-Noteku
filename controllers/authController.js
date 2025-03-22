@@ -55,6 +55,7 @@ export const login = async (req, res) => {
             secure: process.env.NODE_ENV === "production",
             sameSite: "None",
             path: "/",
+            domain: ".vercel.app",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
@@ -63,6 +64,7 @@ export const login = async (req, res) => {
             secure: process.env.NODE_ENV === "production",
             sameSite: "None",
             path: "/",
+            domain: ".vercel.app",
             maxAge: 15 * 60 * 1000,
         });
 
@@ -103,6 +105,7 @@ export const refreshToken = async (req, res) => {
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "None",
                 path: "/",
+                domain: ".vercel.app",
                 maxAge: 15 * 60 * 1000,
             });
 
