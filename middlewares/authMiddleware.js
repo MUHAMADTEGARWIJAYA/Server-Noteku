@@ -3,7 +3,8 @@ import User from "../models/userModel.js";
 
 export const verifyToken = async (req, res, next) => {
     try {
-        const token = req.cookies.accessToken; // Ambil token dari cookie
+        
+        const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
             return res.status(401).json({ message: "Akses ditolak. Token tidak tersedia." });
         }
