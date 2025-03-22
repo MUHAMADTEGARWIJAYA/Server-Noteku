@@ -6,6 +6,8 @@ import cors from "cors";
 import userRouter from "./routes/userRouter.js";
 import cookieParser from "cookie-parser";
 import noteRouter from "./routes/noteRouter.js";
+import helmet from "helmet";
+import ExpressMongoSanitize from "express-mongo-sanitize";
 const app = express();
 dotenv.config();
 const port = 4000
@@ -17,6 +19,8 @@ const port = 4000
 connectDB();
 
 app.use(express.json());
+app.use(helmet());
+app.use(ExpressMongoSanitize());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(

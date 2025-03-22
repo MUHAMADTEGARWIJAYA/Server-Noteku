@@ -34,6 +34,15 @@ export const getNotes = async (req, res) => {
     }
 };
 
+export const getAllNotes = async (req, res) => {
+    try {
+        const notes = await Note.find();
+        res.json(notes);
+    } catch (error) {
+        res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
+    }
+};
+
 // Get Single Note
 export const getNoteById = async (req, res) => {
     try {
