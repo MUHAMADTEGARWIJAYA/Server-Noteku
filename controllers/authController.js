@@ -80,11 +80,16 @@ export const login = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
     try {
+        console.log("Cookies:", req.cookies); // Log cookie yang diterima
         const refreshToken = req.cookies.refreshToken;
+
         if (!refreshToken) return res.status(401).json({ message: "Token tidak diberikan" });
 
         const user = await User.findOne({ refreshToken });
+
         if (!user) return res.status(403).json({ message: "Refresh token tidak valid" });
+
+        console.log("User ditemukan:", user);
 
         jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
             if (err) {
@@ -94,22 +99,23 @@ export const refreshToken = async (req, res) => {
             }
 
             const newAccessToken = generateAccessToken(user);
-            
-            // Update access token di cookie
+            console.log("Access token baru:", newAccessToken);
+
             res.cookie("accessToken", newAccessToken, {
                 httpOnly: true,
-                secure: false, // True jika di production
+                secure: false, 
                 sameSite: "strict",
                 maxAge: 15 * 60 * 1000,
-                // Optional: maxAge: 15 * 60 * 1000 // sesuai durasi access token
             });
 
             res.json({ message: "Token berhasil diperbarui" });
         });
     } catch (error) {
+        console.error("Error saat refresh token:", error);
         res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
     }
 };
+
 
 export const logout = async (req, res) => {
     try {
