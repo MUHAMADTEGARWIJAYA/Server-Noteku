@@ -55,7 +55,7 @@ export const login = async (req, res) => {
             secure: process.env.NODE_ENV === "production",
             sameSite: "None",
             path: "/",
-            domain: ".vercel.app",
+          
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
@@ -120,43 +120,41 @@ export const refreshToken = async (req, res) => {
 export const logout = async (req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken;
-        console.log('Refresh Token dari Cookies:', refreshToken); // Log refresh token
+        console.log("Refresh Token dari Cookies:", refreshToken); // Debugging
 
         if (!refreshToken) {
             return res.status(401).json({ message: "User tidak login" });
         }
 
         const user = await User.findOne({ refreshToken });
-        console.log('User dari Database:', user); // Log user
+        console.log("User dari Database:", user); // Debugging
 
         if (!user) {
             return res.status(403).json({ message: "User tidak ditemukan" });
         }
 
-        // Hapus token dari database
         user.refreshToken = "";
         await user.save();
-        console.log('Refresh Token di Database Dihapus'); // Log penghapusan token
 
-        // Hapus kedua cookies
+        // Hapus Cookies
         res.clearCookie("refreshToken", { 
             httpOnly: true, 
-            secure: false, 
+            secure: process.env.NODE_ENV === "production", 
             sameSite: "None",
             path: "/"
         });
         
         res.clearCookie("accessToken", { 
             httpOnly: true, 
-            secure: false, 
+            secure: process.env.NODE_ENV === "production", 
             sameSite: "None",
             path: "/"
         });
 
-        console.log('Cookies Dihapus'); // Log penghapusan cookies
+        console.log("Cookies Dihapus"); // Debugging
         return res.status(200).json({ message: "Logout berhasil" });
     } catch (error) {
-        console.error('Error saat logout:', error); // Log error
+        console.error("Error saat logout:", error); // Debugging
         return res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
     }
 };

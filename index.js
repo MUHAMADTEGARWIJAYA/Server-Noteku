@@ -25,9 +25,10 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
-    credentials: true,
+    
     origin: ["http://localhost:3000", "https://client-noteku.vercel.app"], 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
   })
 );
 
