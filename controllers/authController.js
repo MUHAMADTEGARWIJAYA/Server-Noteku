@@ -105,7 +105,7 @@ export const refreshToken = async (req, res) => {
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "None",
                 path: "/",
-                domain: ".vercel.app",
+                
                 maxAge: 15 * 60 * 1000,
             });
 
