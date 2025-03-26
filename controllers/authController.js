@@ -1,13 +1,18 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { PasswordReset } from "../models/forgotPassword.js";
+import crypto from "crypto";import dotenv from "dotenv";
+import nodemailer from "nodemailer";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 
+
+dotenv.config();
 export const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
 
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !role) {
             return res.status(400).json({ message: "Semua field harus diisi" });
         }
 
@@ -20,6 +25,7 @@ export const register = async (req, res) => {
             username,
             email,
             password: hashedPassword,
+            role,
         });
 
         await user.save();
@@ -59,7 +65,7 @@ export const login = async (req, res) => {
 
         res.json({
             message: "Login berhasil",
-            accessToken, // Simpan di localStorage di frontend
+            accessToken, 
             user: { username: user.username, email: user.email },
         });
     } catch (error) {
@@ -126,9 +132,75 @@ export const getName = async (req, res) => {
             const user = await User.findById(decoded.id);
             if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
 
-            res.json({ name: user.username });
+            res.json({ name: user.username, role: user.role }); 
         });
     } catch (error) {
         res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 jam
+
+    await PasswordReset.findOneAndUpdate(
+      { email },
+      { token, expires_at: expiresAt },
+      { upsert: true, new: true }
+    );
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const resetLink = `http://localhost:5000/api/v1/auth/reset/${token}`;
+    const mailOptions = {
+      from: `Your App Name <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Password Reset",
+      html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      return res.json({ message: "Password reset email sent successfully", resetLink });
+    } catch (error) {
+      return res.status(500).json({ message: "Error sending reset email", error });
+    }
+  } catch (error) {
+    console.error("Error processing password reset:", error);
+    res.status(500).json({ message: "Error processing password reset", error });
+  }
+};
+
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        const resetEntry = await PasswordReset.findOne({ token });
+        if (!resetEntry) return res.status(400).json({ message: "Invalid token" });
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await User.findOneAndUpdate({ email: resetEntry.email }, { password: hashedPassword });
+        await PasswordReset.deleteOne({ email: resetEntry.email });
+
+        res.json({ message: "Password reset successful" });
+    } catch (error) {
+        res.status(500).json({ message: "Error resetting password", error: error.message });
     }
 };
