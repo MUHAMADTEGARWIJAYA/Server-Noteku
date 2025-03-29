@@ -27,7 +27,7 @@ export const createNote = async (req, res) => {
 export const getNotes = async (req, res) => {
     try {
         const userId = req.user.id;
-        const notes = await Note.find({ user: userId });
+        const notes = await Note.find({ user: userId, groupId: null });
         res.json(notes);
     } catch (error) {
         res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
@@ -65,7 +65,7 @@ export const updateNote = async (req, res) => {
         const userId = req.user.id;
 
         const note = await Note.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id },
             { title, content },
             { new: true }
         );
