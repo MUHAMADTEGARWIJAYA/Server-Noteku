@@ -23,7 +23,7 @@ const io = new Server(server, {
     origin: ["http://localhost:3000", "https://client-noteku.vercel.app"], 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
-     transports: ["polling"], 
+     transports: ["websocket", "polling"], 
 
   },
 });
