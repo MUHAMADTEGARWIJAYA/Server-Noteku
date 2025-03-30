@@ -29,11 +29,13 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
+const socketToUser = new Map();  // Tambahkan di atas
 
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
   socket.on("join-group", ({ userId, groupId }) => {
+      socketToUser.set(socket.id, { userId, groupId });  // Simpan mapping
     socket.join(groupId);
     console.log(`User ${userId} joined group ${groupId}`);
 
@@ -77,17 +79,17 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
   }
 });
 
-  socket.on("disconnect", () => {
-    console.log("User Disconnected:", socket.id);
-
-      // Hapus user dari semua grup
-     onlineUsers.forEach((users, groupId) => {
-      users.forEach((userId) => {
-        users.delete(userId);
-      });
-      io.to(groupId).emit("update-online-users", Array.from(users));
-    });
-  });
+socket.on("disconnect", () => {
+  const userData = socketToUser.get(socket.id);
+  if (userData) {
+    const { userId, groupId } = userData;
+    if (onlineUsers.has(groupId)) {
+      onlineUsers.get(groupId).delete(userId);
+      io.to(groupId).emit("update-online-users", Array.from(onlineUsers.get(groupId)));
+    }
+    socketToUser.delete(socket.id);
+  }
+});
   });
 
 connectDB();
