@@ -28,13 +28,32 @@ const io = new Server(server, {
   },
 });
 
+const onlineUsers = new Map();
+
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  socket.on("join-group", (groupId) => {
+  socket.on("join-group", (userId, groupId) => {
     socket.join(groupId);
     console.log(`User ${socket.id} joined group ${groupId}`);
+      if (!onlineUsers.has(groupId)) {
+    onlineUsers.set(groupId, new Set());
+  }
+   onlineUsers.get(groupId).add(userId);
+    // Kirim daftar user online ke semua anggota grup
+    io.to(groupId).emit("update-online-users", Array.from(onlineUsers.get(groupId)));
   });
+
+  socket.on("leave-group", ({ userId, groupId }) => {
+    if (onlineUsers.has(groupId)) {
+      onlineUsers.get(groupId).delete(userId);
+
+      // Update daftar user online
+      io.to(groupId).emit("update-online-users", Array.from(onlineUsers.get(groupId)));
+    }
+    socket.leave(groupId);
+  });
+
 
 socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
   try {
@@ -59,8 +78,16 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
 
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
+    
+      // Hapus user dari semua grup
+     onlineUsers.forEach((users, groupId) => {
+      users.forEach((userId) => {
+        users.delete(userId);
+      });
+      io.to(groupId).emit("update-online-users", Array.from(users));
+    });
   });
-});
+  });
 
 connectDB();
 
