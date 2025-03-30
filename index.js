@@ -16,8 +16,7 @@ import Note from "./models/noteModel.js"; // ✅ Import model Note
 dotenv.config();
 const app = express();
 const port = 4000;
-const server = http.createServer(app);
-
+const onlineUsers = {}; // Simpan daftar user online per grup
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "https://client-noteku.vercel.app"], 
@@ -34,6 +33,20 @@ io.on("connection", (socket) => {
   socket.on("join-group", (groupId) => {
     socket.join(groupId);
     console.log(`User ${socket.id} joined group ${groupId}`);
+      if (!onlineUsers[groupId]) onlineUsers[groupId] = new Set();
+    onlineUsers[groupId].add(userId);
+
+    // Broadcast ke grup bahwa user online
+    io.to(groupId).emit("update-online-users", Array.from(onlineUsers[groupId]));
+  });
+
+   socket.on("leave-group", ({ groupId, userId }) => {
+    if (onlineUsers[groupId]) {
+      onlineUsers[groupId].delete(userId);
+      io.to(groupId).emit("update-online-users", Array.from(onlineUsers[groupId]));
+    }
+    socket.leave(groupId);
+    console.log(`User ${userId} left group ${groupId}`);
   });
 
 socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
@@ -59,6 +72,10 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
 
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
+      for (const groupId in onlineUsers) {
+      onlineUsers[groupId].delete(socket.id);
+      io.to(groupId).emit("update-online-users", Array.from(onlineUsers[groupId]));
+    }
   });
 });
 
