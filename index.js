@@ -28,31 +28,7 @@ const io = new Server(server, {
   },
 });
 
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) return next(new Error("Authentication error"));
-
-    try {
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        socket.userId = decoded.id; // Set userId di socket
-        next();
-    } catch (err) {
-        next(new Error("Invalid token"));
-    }
-});
-
-
-
-io.on("connection", async (socket) => {
-  const userId = socket.userId; // Ambil user ID dari token yang sudah diverifikasi
-
-  if (!userId) return;
-
-  // Set user sebagai online di DB
-  await User.findByIdAndUpdate(userId, { status: "online" });
-
-  io.emit("update-status", { userId, status: "online" });
-
+io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
   socket.on("join-group", (groupId) => {
@@ -81,14 +57,8 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
   }
 });
 
-  socket.on("disconnect", async () => {
+  socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
-     await User.findByIdAndUpdate(userId, {
-      status: "offline",
-      lastSeen: new Date(),
-    });
-
-    io.emit("update-status", { userId, status: "offline" });
   });
 });
 
