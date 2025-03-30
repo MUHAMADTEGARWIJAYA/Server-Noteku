@@ -14,6 +14,7 @@ import ExpressMongoSanitize from "express-mongo-sanitize";
 import Note from "./models/noteModel.js"; // ✅ Import model Note
 
 dotenv.config();
+const server = http.createServer(app); // 🔴 Sebelumnya server tidak dideklarasikan!
 const app = express();
 const port = 4000;
 const onlineUsers = {}; // Simpan daftar user online per grup
