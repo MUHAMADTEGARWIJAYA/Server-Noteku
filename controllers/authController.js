@@ -65,7 +65,7 @@ export const login = async (req, res) => {
 
         res.json({
             message: "Login berhasil",
-            accessToken, 
+            accessToken, // Simpan di localStorage di frontend
             user: { username: user.username, email: user.email },
         });
     } catch (error) {
@@ -203,4 +203,47 @@ export const resetPassword = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error resetting password", error: error.message });
     }
+};
+
+// ✅ Update Status User
+export const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const userId = req.user.id; // User ID dari middleware auth
+
+    if (!status) {
+      return res.status(400).json({ message: "Status harus diisi" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { status, lastSeen: new Date() },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User tidak ditemukan" });
+    }
+
+    res.json({ message: "Status diperbarui", user });
+  } catch (error) {
+    res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
+  }
+};
+
+// ✅ Get Status User
+export const getUserStatus = async (req, res) => {
+  try {
+    const userId = req.user.id; // Ambil user ID dari token
+
+    const user = await User.findById(userId).select("username status lastSeen");
+
+    if (!user) {
+      return res.status(404).json({ message: "User tidak ditemukan" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
+  }
 };

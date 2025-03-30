@@ -28,21 +28,7 @@ const io = new Server(server, {
   },
 });
 
-io.use((socket, next) => {
-  const token = socket.handshake.auth.token; // Ambil token dari frontend
 
-  if (!token) {
-    return next(new Error("Authentication error"));
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Verifikasi token
-    socket.userId = decoded.id; // Simpan user ID di socket object
-    next();
-  } catch (err) {
-    next(new Error("Invalid token"));
-  }
-});
 
 
 io.on("connection", async (socket) => {
