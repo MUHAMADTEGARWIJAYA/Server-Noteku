@@ -28,7 +28,33 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token; // Ambil token dari frontend
+
+  if (!token) {
+    return next(new Error("Authentication error"));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Verifikasi token
+    socket.userId = decoded.id; // Simpan user ID di socket object
+    next();
+  } catch (err) {
+    next(new Error("Invalid token"));
+  }
+});
+
+
+io.on("connection", async (socket) => {
+  const userId = socket.userId; // Ambil user ID dari token yang sudah diverifikasi
+
+  if (!userId) return;
+
+  // Set user sebagai online di DB
+  await User.findByIdAndUpdate(userId, { status: "online" });
+
+  io.emit("update-status", { userId, status: "online" });
+
   console.log("User Connected:", socket.id);
 
   socket.on("join-group", (groupId) => {
@@ -57,8 +83,14 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
   }
 });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log("User Disconnected:", socket.id);
+     await User.findByIdAndUpdate(userId, {
+      status: "offline",
+      lastSeen: new Date(),
+    });
+
+    io.emit("update-status", { userId, status: "offline" });
   });
 });
 
