@@ -33,9 +33,10 @@ const onlineUsers = new Map();
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  socket.on("join-group", (userId, groupId) => {
+  socket.on("join-group", ({ userId, groupId }) => {
     socket.join(groupId);
-    console.log(`User ${socket.id} joined group ${groupId}`);
+    console.log(`User ${userId} joined group ${groupId}`);
+
       if (!onlineUsers.has(groupId)) {
     onlineUsers.set(groupId, new Set());
   }
@@ -78,7 +79,7 @@ socket.on("edit-note", async ({ groupId, noteId, content, userId }) => {
 
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
-    
+
       // Hapus user dari semua grup
      onlineUsers.forEach((users, groupId) => {
       users.forEach((userId) => {
