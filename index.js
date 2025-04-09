@@ -20,7 +20,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://client-noteku.vercel.app"],
+    origin: ["http://localhost:3000", "https://client-noteku.vercel.app", "https://catatansaya.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     transports: ["websocket", "polling"],
@@ -116,7 +116,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://client-noteku.vercel.app"],
+    origin: ["http://localhost:3000", "https://client-noteku.vercel.app", "https://catatansaya.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
   })
